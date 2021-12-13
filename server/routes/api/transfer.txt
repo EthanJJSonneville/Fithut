@@ -1,0 +1,138 @@
+const express = require("express");
+const {MongoClient} = require("mongodb");
+const { routerViewLocationKey } = require("vue-router");
+
+const router = express.Router();
+
+async function main(){
+
+    const uri = "mongodb+srv://gump100:GreenDay100@cluster.4yjzu.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
+    const client = new MongoClient(uri);
+
+    try{
+        //Get Entry
+        router.get("/", async (req, res) => {
+            const entries = await loadEntriesCollection(client);
+            
+            res.send(await entries.find({name:req.query.name, type:req.query.type, username:req.query.username}).toArray());
+        } );
+        
+        
+        //Add Entry
+        router.post("/", async (req, res ) =>{
+            const entries = await loadEntriesCollection(client);
+            await entries.insertOne({
+                type: req.body.type,
+                name: req.body.name,
+                description: req.body.description,
+                calories: req.body.calories,
+                username: req.body.username,
+
+            })
+            //201:everything went okay and something was created
+            res.status(201).send();
+            console.log("Entry has been created")
+        });
+
+        //Update Entry
+        router.put("/", async (req, res) => {
+            const entries = await loadEntriesCollection(client);
+            await entries.updateOne(
+                {name:req.body.name, username:req.body.username},
+                {$set:{description: req.body.description,calories: req.body.calories, }
+            })
+            res.status(201).send();
+            console.log('Entry has been updated');
+
+
+        })
+    }catch (e) {
+        console.error(e)
+    } finally{
+        await client.close();
+    }
+}
+//function call to run main
+main().catch(console.error);
+
+async function loadEntriesCollection(client){
+    
+    await client.connect();
+    return await client.db('Entries').collection(`entries`);
+}
+
+
+module.exports = router;
+
+
+
+
+-----------------------
+
+
+import axios from "axios";
+
+const url = 'http://localhost:5000/api/FormSubmission/';
+
+ class FormSubmission {
+
+    static getEntry(name,type,username) {
+        return new Promise ((resolve,reject) => {
+            axios.get(url,{params:{name:name,type:type,username:username}}).then((res) => {
+                const data = res.data;
+                resolve(
+                    data.map(entry => ({
+                        _id: entry._id,
+                        type: entry.type,
+                        name: entry.name,
+                        description: entry.description,
+                        calories: entry.calories,
+                        username: entry.username,
+                    }))
+                );
+                
+            })
+            .catch((err)=> {
+                reject(err);
+            })
+            
+        });
+    }
+
+    static checkName(object){
+        return object.name == 'test'
+    }
+    
+    //Create Entry
+    static createEntry(newEntry){
+        return axios.post(url,newEntry);
+    }
+
+    //Delete Entry
+    static deleteEntry(name,username){
+        return axios.delete(url,{
+            data: {
+                name:name,
+                username:username
+             }});
+        
+    }
+    static updateEntry(username,name,description,calories){
+        return axios.put(url,{
+            description: description,
+            calories: calories,
+            name: name,
+            username:username
+        });
+    }
+}
+
+
+export default FormSubmission;
+
+
+
+--------------------------------
+
+
+
