@@ -15,7 +15,8 @@
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "mongodb": "^4.1.2",
-    "plotly": "^1.0.6"
+    "plotly": "^1.0.6",
+    "vue-router": "^4.0.12"
   },
   "devDependencies": {
     "nodemon": "^2.0.13"
